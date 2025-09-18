@@ -9,3 +9,10 @@ step 3: open terminal and run these commands<br>
 step 4: open app.py and click on run <br>
 step 5: terminal madhe link yeil <br>
 -- `http:127.0.0.1:500` <br>
+
+
+git commands to push working code:
+1. check status `git status`
+2. `git add .` OR `git add filename1 filename2` (for specific files to add)
+3. `git commit -m "your commit message here" ` for commit message
+4. push changes to repo `git push origin main`
