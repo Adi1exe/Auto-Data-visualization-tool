@@ -108,6 +108,100 @@ def generate_visualizations(df, columns):
 
     return images
 
+def generate_insights(df):
+    """Generate business-friendly hidden pattern insights and related visualizations."""
+    insights = []
+    images = {}
+
+    # ---- 1. Correlation Insights ----
+    numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
+    if len(numeric_cols) > 1:
+        corr = df[numeric_cols].corr().abs()
+        corr_pairs = (
+            corr.unstack()
+            .sort_values(ascending=False)
+            .drop_duplicates()
+        )
+        top_corrs = corr_pairs[(corr_pairs < 1)].head(3)
+        for (col1, col2), val in top_corrs.items():
+            insights.append({
+                "type": "correlation",
+                "text": f"As {col1} increases, {col2} also tends to increase ({val:.0%} relationship)."
+            })
+
+        # Plot top correlations
+        try:
+            plt.figure(figsize=(6, 4))
+            top_corrs.plot(kind="bar", color="#00ffff")
+            plt.title("Top Correlations")
+            plt.ylabel("Strength")
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+            img = io.BytesIO()
+            plt.savefig(img, format="png", transparent=True)
+            plt.close()
+            img.seek(0)
+            images["top_correlations"] = base64.b64encode(img.getvalue()).decode()
+        except Exception as e:
+            print(f"Error plotting correlations: {e}")
+
+    # ---- 2. Outlier Detection ----
+    for col in numeric_cols:
+        q1, q3 = df[col].quantile([0.25, 0.75])
+        iqr = q3 - q1
+        lower, upper = q1 - 1.5 * iqr, q3 + 1.5 * iqr
+        outliers = df[(df[col] < lower) | (df[col] > upper)][col]
+        if len(outliers) > 0:
+            insights.append({
+                "type": "outlier",
+                "text": f"{len(outliers)} unusual values found in {col} — possible errors or special cases."
+            })
+
+            # Boxplot
+            try:
+                plt.figure(figsize=(5, 4))
+                sns.boxplot(x=df[col], color="#ff00ff")
+                plt.title(f"Outliers in {col}")
+                plt.tight_layout()
+                img = io.BytesIO()
+                plt.savefig(img, format="png", transparent=True)
+                plt.close()
+                img.seek(0)
+                images[f"outliers_{col}"] = base64.b64encode(img.getvalue()).decode()
+            except Exception as e:
+                print(f"Error plotting boxplot for {col}: {e}")
+
+    # ---- 3. Clustering ----
+    if len(numeric_cols) >= 2:
+        try:
+            from sklearn.cluster import KMeans
+            sample = df[numeric_cols].dropna().sample(min(500, len(df)), random_state=42)
+            kmeans = KMeans(n_clusters=3, random_state=42).fit(sample)
+            sample["Cluster"] = kmeans.labels_
+            insights.append({
+                "type": "cluster",
+                "text": "The data naturally groups into 3 segments with similar patterns."
+            })
+
+            plt.figure(figsize=(6, 5))
+            sns.scatterplot(
+                x=sample[numeric_cols[0]],
+                y=sample[numeric_cols[1]],
+                hue="Cluster",
+                palette="viridis",
+                s=50
+            )
+            plt.title("Cluster Pattern")
+            plt.tight_layout()
+            img = io.BytesIO()
+            plt.savefig(img, format="png", transparent=True)
+            plt.close()
+            img.seek(0)
+            images["clusters"] = base64.b64encode(img.getvalue()).decode()
+        except Exception as e:
+            print(f"Error generating clusters: {e}")
+
+    return insights, images
 
 @app.route('/')
 def index():
@@ -148,7 +242,7 @@ def upload():
 
 @app.route('/visualize', methods=['POST'])
 def visualize():
-    """Generate and return visualizations based on user's column selection."""
+    """Generate and return visualizations and hidden insights based on user's column selection."""
     data = request.get_json()
     filename = data.get('filename')
     columns = data.get('columns')
@@ -159,16 +253,28 @@ def visualize():
     filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
     try:
+        # Read file
         if filename.endswith('.csv'):
             df = pd.read_csv(filepath)
         else:
             df = pd.read_excel(filepath)
         
+        # Generate normal plots
         images = generate_visualizations(df, columns)
-        
-        return jsonify({'images': images})
+
+        # Generate hidden pattern insights + extra plots
+        insights, insight_images = generate_insights(df)
+
+        # Merge all plots
+        images.update(insight_images)
+
+        return jsonify({
+            'images': images,
+            'insights': insights
+        })
     except Exception as e:
         return jsonify({'error': f'An error occurred: {e}'}), 500
+
 
 
 if __name__ == '__main__':

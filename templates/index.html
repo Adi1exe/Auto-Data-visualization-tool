@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sleek Data Visualizer</title>
+    <title>Automatic Data Visualization Tool</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><i data-feather="bar-chart-2"></i> Sleek Data Visualizer</h1>
+            <h1><i data-feather="bar-chart-2"></i>Auto Data Visualization Tool</h1>
             <p>Upload your dataset to generate clean, modern visualizations instantly.</p>
         </header>
 
@@ -64,7 +64,44 @@
                 <p>Generating plots...</p>
             </div>
             <div id="visualizations" class="visualizations-container">
-                </div>
+            </div>
+
+            <div id="visualizations" class="visualizations-container">
+</div>
+
+<!-- Insights Section -->
+<div id="insights-card" class="card" style="display: none; margin-top: 20px;">
+    <h2><i data-feather="search"></i> Hidden Insights</h2>
+    <p style="color: #aaa; font-size: 14px;">
+        Automatically detected patterns and highlights from your dataset.
+    </p>
+
+    <!-- Correlation Insights -->
+    <div id="correlation-insights" class="insight-category" style="display:none;">
+        <h3><i data-feather="bar-chart-2"></i> Relationships</h3>
+        <ul></ul>
+    </div>
+
+    <!-- Outlier Insights -->
+    <div id="outlier-insights" class="insight-category" style="display:none;">
+        <h3><i data-feather="alert-triangle"></i> Unusual Values</h3>
+        <ul></ul>
+    </div>
+
+    <!-- Cluster Insights -->
+    <div id="cluster-insights" class="insight-category" style="display:none;">
+        <h3><i data-feather="layers"></i> Groups & Segments</h3>
+        <ul></ul>
+    </div>
+
+    <!-- Trend Insights -->
+    <div id="trend-insights" class="insight-category" style="display:none;">
+        <h3><i data-feather="trending-up"></i> Trends & Time Patterns</h3>
+        <ul></ul>
+    </div>
+</div>
+
+
         </main>
         
         <footer>

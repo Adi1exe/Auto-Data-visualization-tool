@@ -326,3 +326,32 @@ footer {
     .charts-grid { grid-template-columns: 1fr; }
     .action-buttons { flex-direction: column; }
 }
+
+.insight-category {
+    margin-top: 15px;
+    padding: 10px 15px;
+    border-left: 3px solid #00ffff;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+}
+
+.insight-category h3 {
+    font-size: 16px;
+    color: #00ffff;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.insight-category ul {
+    list-style: disc;
+    padding-left: 20px;
+    margin: 0;
+}
+
+.insight-category li {
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: #eee;
+}
