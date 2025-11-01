@@ -8,6 +8,17 @@
     --text-color: #e2e8f0;
     --text-muted-color: #94a3b8;
     --font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    --transition-speed: 0.4s;
+}
+
+/* --- Light Mode Variables --- */
+body.light-mode {
+    --bg-color: #f4f7f6;
+    --card-color: #ffffff;
+    --border-color: #dde3e0;
+    --text-color: #121826;
+    --text-muted-color: #5a687f;
+    --bg-radial: rgba(56, 115, 245, 0.05);
 }
 
 * {
@@ -24,10 +35,11 @@
 body {
     font-family: var(--font-family);
     background-color: var(--bg-color);
-    background-image: radial-gradient(circle at 15% 15%, rgba(56, 115, 245, 0.1), transparent 30%);
+    background-image: radial-gradient(circle at 15% 15%, var(--bg-radial, rgba(56, 115, 245, 0.1)), transparent 30%);
     color: var(--text-color);
     line-height: 1.6;
     padding: 20px;
+    transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
 }
 
 /* --- Layout and Header --- */
@@ -41,6 +53,7 @@ header {
     text-align: center;
     margin-bottom: 50px;
     animation: fadeIn 0.8s ease-out;
+    position: relative;
 }
 
 header h1 {
@@ -56,7 +69,83 @@ header h1 {
 header p {
     font-size: 1.1rem;
     color: var(--text-muted-color);
+    transition: color var(--transition-speed) ease;
 }
+
+/* --- Theme Toggle Switch --- */
+.theme-switch-wrapper {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted-color);
+}
+.theme-switch-wrapper .theme-icon {
+    width: 18px;
+    height: 18px;
+}
+.theme-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px; /* smaller toggle */
+    height: 24px;
+}
+.theme-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--border-color);
+    transition: var(--transition-speed) ease;
+}
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: var(--transition-speed) ease;
+}
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+input:checked + .slider:before {
+    transform: translateX(20px);
+}
+.slider.round {
+    border-radius: 24px;
+}
+.slider.round:before {
+    border-radius: 50%;
+}
+
+/* --- Ripple Effect for Theme Toggle --- */
+#ripple-effect {
+    position: fixed;
+    border-radius: 50%;
+    background: var(--card-color);
+    transform: scale(0);
+    pointer-events: none;
+    z-index: 999;
+}
+@keyframes ripple {
+    to {
+        transform: scale(100);
+        opacity: 0;
+    }
+}
+
 
 /* --- Card Styling --- */
 .card {
@@ -68,9 +157,11 @@ header p {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
     animation: fadeIn 0.8s ease-out forwards;
     opacity: 0; /* Start hidden for animation */
+    transition: background-color var(--transition-speed) ease, border-color var(--transition-speed) ease;
 }
 
 #columns-card { animation-delay: 0.2s; }
+#graphs-card { animation-delay: 0.3s; }
 
 .card h2 {
     font-size: 1.5rem;
@@ -81,13 +172,12 @@ header p {
     display: flex;
     align-items: center;
     gap: 10px;
+    transition: border-color var(--transition-speed) ease;
 }
 
 /* --- Form Elements --- */
-form {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+form#selection-form {
+    display: block; /* reset flex from old styling */
 }
 
 /* File Input */
@@ -171,10 +261,11 @@ form {
     display: flex;
     gap: 15px;
     margin-top: 25px;
+    justify-content: center; /* Center buttons */
 }
 
-/* --- Columns Selection Grid --- */
-.columns-grid {
+/* --- Selection Grids (for Columns and Graphs) --- */
+.selection-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 15px;
@@ -229,6 +320,7 @@ form {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: color var(--transition-speed) ease;
 }
 
 /* --- Visualizations Area --- */
@@ -241,6 +333,20 @@ form {
     padding-right: 0;
     margin-bottom: 0;
 }
+
+/* Style for the new "Useful" visualizations header */
+.visualizations-container h2 {
+    font-size: 1.5rem;
+    font-weight: 500;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: border-color var(--transition-speed) ease;
+}
+
 
 .charts-grid {
     display: grid;
@@ -272,6 +378,12 @@ form {
     border-radius: 8px;
     padding: 10px;
 }
+/* Light mode adjustment for image wrapper */
+body.light-mode .chart-image-wrapper {
+    background-color: #f8f8f8;
+    border: 1px solid #eee;
+}
+
 .chart-card img {
     max-width: 100%;
     height: auto;
@@ -316,6 +428,7 @@ footer {
     padding-top: 20px;
     border-top: 1px solid var(--border-color);
     color: var(--text-muted-color);
+    transition: border-color var(--transition-speed) ease, color var(--transition-speed) ease;
 }
 
 /* --- Responsive Design --- */
@@ -325,19 +438,28 @@ footer {
     header h1 { font-size: 2rem; }
     .charts-grid { grid-template-columns: 1fr; }
     .action-buttons { flex-direction: column; }
+    .theme-switch-wrapper {
+        position: static;
+        justify-content: center;
+        margin-top: 15px;
+    }
 }
 
 .insight-category {
     margin-top: 15px;
     padding: 10px 15px;
-    border-left: 3px solid #00ffff;
+    border-left: 3px solid var(--primary-color); /* Use primary color */
     background: rgba(255, 255, 255, 0.03);
     border-radius: 8px;
 }
+body.light-mode .insight-category {
+    background: #f8f9fa;
+}
+
 
 .insight-category h3 {
     font-size: 16px;
-    color: #00ffff;
+    color: var(--primary-color); /* Use primary color */
     margin-bottom: 8px;
     display: flex;
     align-items: center;
@@ -353,5 +475,82 @@ footer {
 .insight-category li {
     margin-bottom: 6px;
     font-size: 14px;
-    color: #eee;
+    color: var(--text-color); /* Use main text color */
+}
+
+/* --- Main Navigation --- */
+nav.main-nav {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 15px 0;
+}
+nav.main-nav a {
+    color: var(--text-muted-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+    padding: 5px 10px;
+    border-radius: 6px;
+}
+nav.main-nav a:hover {
+    color: var(--primary-color);
+    background-color: var(--card-color);
+}
+
+/* --- Auth Form Styling --- */
+.auth-card {
+    max-width: 500px;
+    margin: 40px auto;
+    animation-delay: 0.1s; /* Load faster than other cards */
+}
+.auth-form {
+    width: 100%;
+}
+.auth-form .form-group {
+    width: 100%;
+    margin-bottom: 20px;
+    text-align: left;
+}
+.auth-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: var(--text-muted-color);
+}
+.auth-form input[type="email"],
+.auth-form input[type="password"] {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: all 0.3s ease;
+}
+.auth-form input[type="email"]:focus,
+.auth-form input[type="password"]:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(56, 115, 245, 0.2);
+    outline: none;
+}
+.auth-form .action-buttons {
+    width: 100%;
+    justify-content: center;
+}
+.auth-switch {
+    text-align: center;
+    margin-top: 25px;
+    color: var(--text-muted-color);
+}
+.auth-switch a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+}
+.error-small {
+    color: #ff5252;
+    font-size: 0.9em;
+    margin-top: 5px;
 }
