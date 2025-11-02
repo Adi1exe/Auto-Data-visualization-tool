@@ -1,81 +1,148 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automatic Data Visualization Tool</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+<body>
+    <div id="ripple-effect"></div>
 
-{% block title %}Visualizer - {{ super() }}{% endblock %}
-
-{% block content %}
-    <div class="card" id="upload-card">
-        <h2><i data-feather="upload-cloud"></i> 1. Upload Dataset</h2>
-        <form id="upload-form" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
-            <div class="file-input-wrapper">
-                <input type="file" name="file" id="file-input" accept=".csv, .xlsx" required>
-                <label for="file-input" class="file-input-label">
-                    <i data-feather="file"></i>
-                    <span id="file-name-display">Choose a file (.csv, .xlsx)</span>
+    <div class="container">
+        <header>
+            <h1><i data-feather="bar-chart-2"></i>Auto Data Visualization Tool</h1>
+            <p>Upload your dataset to generate clean, modern visualizations instantly.</p>
+            
+            <div class="theme-switch-wrapper">
+                <i data-feather="sun" class="theme-icon"></i>
+                <label class="theme-switch" for="theme-checkbox">
+                    <input type="checkbox" id="theme-checkbox" />
+                    <div class="slider round"></div>
                 </label>
+                <i data-feather="moon" class="theme-icon"></i>
             </div>
-            <button type="submit" class="btn btn-primary">
-                <i data-feather="play"></i> Upload & Analyze
-            </button>
-        </form>
-        {% if error %}
-            <p class="error">{{ error }}</p>
-        {% endif %}
-    </div>
+        </header>
 
-    {% if columns %}
-    <div class="card" id="columns-card">
-        <h2><i data-feather="check-square"></i> 2. Select Columns</h2>
-        <form id="columns-form">
-            <input type="hidden" name="filename" value="{{ filename }}">
-            <div class="columns-grid">
-                {% for column in columns %}
-                <div class="checkbox-wrapper">
-                    <input type="checkbox" name="columns" value="{{ column }}" id="col-{{ loop.index }}">
-                    <label for="col-{{ loop.index }}">{{ column }}</label>
+        <main>
+            <div class="card" id="upload-card">
+                <h2><i data-feather="upload-cloud"></i> 1. Upload Dataset</h2>
+                <form id="upload-form" action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+                    <div class="file-input-wrapper">
+                        <input type="file" name="file" id="file-input" accept=".csv, .xlsx" required>
+                        <label for="file-input" class="file-input-label">
+                            <i data-feather="file"></i>
+                            <span id="file-name-display">Choose a file (.csv, .xlsx)</span>
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i data-feather="play"></i> Upload & Analyze
+                    </button>
+                </form>
+                {% if error %}
+                    <p class="error">{{ error }}</p>
+                {% endif %}
+            </div>
+
+            {% if columns %}
+            <form id="selection-form">
+                <input type="hidden" name="filename" value="{{ filename }}">
+                
+                <div class="card" id="columns-card">
+                    <h2><i data-feather="check-square"></i> 2. Select Columns</h2>
+                    <div class="selection-grid">
+                        {% for column in columns %}
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" name="columns" value="{{ column }}" id="col-{{ loop.index }}" checked>
+                            <label for="col-{{ loop.index }}">{{ column }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" id="select-all-columns" class="btn btn-secondary">
+                            <i data-feather="list"></i> Select All / None
+                        </button>
+                    </div>
                 </div>
-                {% endfor %}
+
+                <div class="card" id="graphs-card">
+                    <h2><i data-feather="pie-chart"></i> 3. Select Graph Types</h2>
+                    <div class="selection-grid">
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" name="graphs" value="heatmap" id="graph-heatmap" checked>
+                            <label for="graph-heatmap">Correlation Heatmap</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" name="graphs" value="pairplot" id="graph-pairplot" checked>
+                            <label for="graph-pairplot">Pairplot</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" name="graphs" value="distribution" id="graph-distribution" checked>
+                            <label for="graph-distribution">Distribution Plots (for numbers)</label>
+                        </div>
+                        <div class="checkbox-wrapper">
+                            <input type="checkbox" name="graphs" value="count" id="graph-count" checked>
+                            <label for="graph-count">Count Plots (for text/categories)</label>
+                        </div>
+                    </div>
+                    <div class="action-buttons">
+                        <button type="button" id="select-all-graphs" class="btn btn-secondary">
+                            <i data-feather="list"></i> Select All / None
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i data-feather="zap"></i> Generate Visualizations
+                        </button>
+                    </div>
+                </div>
+            </form>
+            {% endif %}
+
+            <div id="loader" class="loader" style="display: none;">
+                <i data-feather="loader"></i>
+                <p>Generating plots...</p>
             </div>
-            <div class="action-buttons">
-                <button type="button" id="select-all" class="btn btn-secondary">
-                    <i data-feather="list"></i> Select All / None
-                </button>
-                <button type="submit" class="btn btn-primary">
-                    <i data-feather="zap"></i> Generate Visualizations
-                </button>
+            
+            <div id="visualizations" class="visualizations-container">
             </div>
-        </form>
-    </div>
-    {% endif %}
+            
+            <div id="useful-visualizations" class="visualizations-container">
+            </div>
 
-    <div id="loader" class="loader" style="display: none;">
-        <i data-feather="loader"></i>
-        <p>Generating plots...</p>
-    </div>
-    
-    <div id="visualizations" class="visualizations-container">
+            <div id="insights-card" class="card" style="display: none; margin-top: 20px;">
+                <h2><i data-feather="search"></i> Hidden Insights</h2>
+                <p style="color: #aaa; font-size: 14px;">
+                    Automatically detected patterns and highlights from your dataset.
+                </p>
+
+                <div id="correlation-insights" class="insight-category" style="display:none;">
+                    <h3><i data-feather="bar-chart-2"></i> Relationships</h3>
+                    <ul></ul>
+                </div>
+
+                <div id="outlier-insights" class="insight-category" style="display:none;">
+                    <h3><i data-feather="alert-triangle"></i> Unusual Values</h3>
+                    <ul></ul>
+                </div>
+
+                <div id="cluster-insights" class="insight-category" style="display:none;">
+                    <h3><i data-feather="layers"></i> Groups & Segments</h3>
+                    <ul></ul>
+                </div>
+
+                <div id="trend-insights" class="insight-category" style="display:none;">
+                    <h3><i data-feather="trending-up"></i> Trends & Time Patterns</h3>
+                    <ul></ul>
+                </div>
+            </div>
+
+        </main>
+        
+        <footer>
+            <p>Powered by 'मानचित्र'</p>
+        </footer>
     </div>
 
-    <div id="insights-card" class="card" style="display: none; margin-top: 20px;">
-        <h2><i data-feather="search"></i> Hidden Insights</h2>
-        <p style="color: #aaa; font-size: 14px;">
-            Automatically detected patterns and highlights from your dataset.
-        </p>
-
-        <div id="correlation-insights" class="insight-category" style="display:none;">
-            <h3><i data-feather="bar-chart-2"></i> Relationships</h3>
-            <ul></ul>
-        </div>
-        <div id="outlier-insights" class="insight-category" style="display:none;">
-            <h3><i data-feather="alert-triangle"></i> Unusual Values</h3>
-            <ul></ul>
-        </div>
-        <div id="cluster-insights" class="insight-category" style="display:none;">
-            <h3><i data-feather="layers"></i> Groups & Segments</h3>
-            <ul></ul>
-        </div>
-        <div id="trend-insights" class="insight-category" style="display:none;">
-            <h3><i data-feather="trending-up"></i> Trends & Time Patterns</h3>
-            <ul></ul>
-        </div>
-    </div>
-{% endblock %}
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
