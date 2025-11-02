@@ -59,7 +59,7 @@ header {
     text-align: center;
     margin-bottom: 50px;
     animation: slideDown 0.6s ease;
-    position: sticky;
+    position: static;
     padding: 20px;
 }
 

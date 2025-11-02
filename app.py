@@ -1,4 +1,5 @@
 import os
+import json
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg') # Use a non-interactive backend
@@ -12,15 +13,27 @@ import firebase_admin
 from firebase_admin import credentials, storage
 import firebase_admin.auth as auth
 
-try:
-    cred = credentials.Certificate("serviceAccountKey.json")
+service_account_env = os.environ.get('FIREBASE_SERVICE_ACCOUNT')
+
+if service_account_env:
+    try:
+        service_account_info = json.loads(service_account_env)
+        cred = credentials.Certificate(service_account_info)
+    except json.JSONDecodeError as e:
+        print(f"Error decoding FIREBASE_SERVICE_ACCOUNT: {e}")
+        raise
+else:
+    try:
+        cred = credentials.Certificate("serviceAccountKey.json")
+    except FileNotFoundError:
+        print("Error: 'serviceAccountKey.json' not found for local development.")
+        print("Ensure the file is in the root directory or set the FIREBASE_SERVICE_ACCOUNT env variable.")
+        raise
+
+if not firebase_admin._apps:
     firebase_admin.initialize_app(cred)
-except FileNotFoundError:
-    print("Error: 'serviceAccountKey.json' not found. Please download it from your Firebase project settings.")
-    # You might want to exit or handle this error more gracefully
-except ValueError as e:
-    # This can happen if firebase_admin is already initialized (e.g., during hot reload)
-    print(f"Firebase already initialized or error: {e}")
+else:
+    print("Firebase app already initialized.")
 
 # Initialize Flask app
 app = Flask(__name__)
