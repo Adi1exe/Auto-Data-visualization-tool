@@ -6,11 +6,26 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import io
 import base64
-from flask import Flask, request, render_template, jsonify, redirect, url_for
+from flask import Flask, request, render_template, session, make_response,  jsonify, redirect, url_for
 from werkzeug.utils import secure_filename
+import firebase_admin
+from firebase_admin import credentials, storage
+import firebase_admin.auth as auth
+
+try:
+    cred = credentials.Certificate("serviceAccountKey.json")
+    firebase_admin.initialize_app(cred)
+except FileNotFoundError:
+    print("Error: 'serviceAccountKey.json' not found. Please download it from your Firebase project settings.")
+    # You might want to exit or handle this error more gracefully
+except ValueError as e:
+    # This can happen if firebase_admin is already initialized (e.g., during hot reload)
+    print(f"Firebase already initialized or error: {e}")
 
 # Initialize Flask app
 app = Flask(__name__)
+
+app.secret_key = '00326e9df953f171d63fb6f66527d38887f5f81e22546b68eaa50118198f9afc'
 
 # Configuration
 UPLOAD_FOLDER = 'uploads'
@@ -26,6 +41,55 @@ def allowed_file(filename):
     """Check if the uploaded file has an allowed extension."""
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+chart_data_store = {}
+
+# --- MODIFIED Main Route (Protected) ---
+@app.route('/')
+def index():
+    # Check if user is in session. If not, redirect to auth page.
+    if 'user' not in session:
+        return redirect(url_for('auth_page'))
+    
+    # If user is logged in, show the main application
+    return render_template('index.html')
+
+# --- NEW Authentication Page Route ---
+@app.route('/auth')
+def auth_page():
+    # If user is already logged in, redirect them to the main page
+    if 'user' in session:
+        return redirect(url_for('index'))
+    
+    # Otherwise, show the login/signup page
+    return render_template('auth.html')
+
+# --- NEW Session Login Route (called by frontend JS) ---
+@app.route('/api/session_login', methods=['POST'])
+def session_login():
+    try:
+        # Get the ID token sent from the client
+        id_token = request.json.get('idToken')
+        
+        # Verify the ID token with Firebase Admin
+        decoded_token = auth.verify_id_token(id_token)
+        
+        # Store the user's UID in the Flask session
+        session['user'] = decoded_token['uid']
+        
+        return make_response("Session login successful", 200)
+    except auth.InvalidIdTokenError:
+        return make_response("Invalid ID token", 401)
+    except Exception as e:
+        return make_response(f"Error: {str(e)}", 500)
+
+# --- NEW Logout Route ---
+@app.route('/logout')
+def logout():
+    # Clear the user from the session
+    session.pop('user', None)
+    # Redirect to the authentication page
+    return redirect(url_for('auth_page'))
 
 def set_plot_theme(theme='dark'):
     """Sets the matplotlib theme based on 'light' or 'dark' mode."""
@@ -280,11 +344,6 @@ def generate_insights(df, theme='dark'):
             print(f"Error generating clusters: {e}")
 
     return insights, images
-
-@app.route('/')
-def index():
-    """Render the main page with the upload form."""
-    return render_template('index.html')
 
 @app.route('/upload', methods=['POST'])
 def upload():

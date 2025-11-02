@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login / Sign Up</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+</head>
+<body class="dark-theme">
+    <button class="theme-toggle" id="theme-toggle"></button>
+    
+    <header>
+        <h1>Auto Data Visualization</h1>
+        <h4>A WebApp for Visualize Data in a Clean, Modern Way</h4>
+    </header>
+
+    <main>
+        <div class="auth-container">
+            <div class="form-toggle" data-active="login">
+                <button id="show-login-btn" class="active">Login</button>
+                <button id="show-signup-btn">Sign Up</button>
+            </div>
+
+            <form id="login-form" class="auth-form">
+                <h2>Welcome back</h2>
+                <div class="form-group">
+                    <label for="login-email">Email</label>
+                    <input type="email" id="login-email" placeholder="name@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn">Login</button>
+                <p id="login-error" class="error-message"></p>
+            </form>
+
+            <form id="signup-form" class="auth-form" style="display: none;">
+                <h2>Create account</h2>
+                <div class="form-group">
+                    <label for="signup-email">Email</label>
+                    <input type="email" id="signup-email" placeholder="name@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" placeholder="Min. 6 characters" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label for="signup-password-confirm">Confirm password</label>
+                    <input type="password" id="signup-password-confirm" placeholder="Re-enter password" required minlength="6">
+                    <div id="password-match-msg" class="password-match"></div>
+                </div>
+                <button type="submit" class="btn">Sign Up</button>
+                <p id="signup-error" class="error-message"></p>
+            </form>
+        </div>
+    </main>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+  apiKey: "AIzaSyCNg4r361JZOVlBohZjwjNk2xvnDfr7emQ",
+  authDomain: "atlas-99759.firebaseapp.com",
+  projectId: "atlas-99759",
+  storageBucket: "atlas-99759.firebasestorage.app",
+  messagingSenderId: "419577277263",
+  appId: "1:419577277263:web:5441b29f2e25c37327733a"
+};
+        firebase.initializeApp(firebaseConfig);
+        const fb_auth = firebase.auth();
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const themeToggle = document.getElementById('theme-toggle');
+            const body = document.body;
+            const showLoginBtn = document.getElementById('show-login-btn');
+            const showSignupBtn = document.getElementById('show-signup-btn');
+            const formToggle = document.querySelector('.form-toggle');
+            const loginForm = document.getElementById('login-form');
+            const signupForm = document.getElementById('signup-form');
+            const loginError = document.getElementById('login-error');
+            const signupError = document.getElementById('signup-error');
+            const signupPassword = document.getElementById('signup-password');
+            const signupPasswordConfirm = document.getElementById('signup-password-confirm');
+            const passwordMatchMsg = document.getElementById('password-match-msg');
+
+            // Theme toggle with smooth transition
+            themeToggle.addEventListener('click', () => {
+                body.classList.toggle('dark-theme');
+            });
+
+            // Toggle forms with smooth animation
+            showLoginBtn.addEventListener('click', () => {
+                signupForm.style.display = 'none';
+                setTimeout(() => {
+                    loginForm.style.display = 'block';
+                    formToggle.setAttribute('data-active', 'login');
+                }, 50);
+                showLoginBtn.classList.add('active');
+                showSignupBtn.classList.remove('active');
+                loginError.textContent = '';
+                signupError.textContent = '';
+            });
+
+            showSignupBtn.addEventListener('click', () => {
+                loginForm.style.display = 'none';
+                setTimeout(() => {
+                    signupForm.style.display = 'block';
+                    formToggle.setAttribute('data-active', 'signup');
+                }, 50);
+                showLoginBtn.classList.remove('active');
+                showSignupBtn.classList.add('active');
+                loginError.textContent = '';
+                signupError.textContent = '';
+                passwordMatchMsg.textContent = '';
+                passwordMatchMsg.className = 'password-match';
+            });
+
+            // Password match validation
+            function checkPasswordMatch() {
+                const password = signupPassword.value;
+                const confirmPassword = signupPasswordConfirm.value;
+
+                if (confirmPassword === '') {
+                    passwordMatchMsg.textContent = '';
+                    passwordMatchMsg.className = 'password-match';
+                } else if (password === confirmPassword) {
+                    passwordMatchMsg.textContent = 'Passwords match';
+                    passwordMatchMsg.className = 'password-match match';
+                } else {
+                    passwordMatchMsg.textContent = 'Passwords do not match';
+                    passwordMatchMsg.className = 'password-match no-match';
+                }
+            }
+
+            signupPassword.addEventListener('input', checkPasswordMatch);
+            signupPasswordConfirm.addEventListener('input', checkPasswordMatch);
+
+            // Send token to backend
+            async function sendTokenToBackend(idToken) {
+                try {
+                    const response = await fetch('/api/session_login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idToken: idToken })
+                    });
+                    
+                    if (response.ok) {
+                        window.location.href = '/';
+                    } else {
+                        const errorText = await response.text();
+                        throw new Error(errorText || 'Session creation failed');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    loginError.textContent = error.message;
+                    signupError.textContent = error.message;
+                }
+            }
+
+            // Sign up
+            signupForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                signupError.textContent = '';
+                
+                const email = document.getElementById('signup-email').value;
+                const password = signupPassword.value;
+                const confirmPassword = signupPasswordConfirm.value;
+
+                if (password !== confirmPassword) {
+                    signupError.textContent = 'Passwords do not match';
+                    return;
+                }
+
+                try {
+                    const userCredential = await fb_auth.createUserWithEmailAndPassword(email, password);
+                    const idToken = await userCredential.user.getIdToken();
+                    await sendTokenToBackend(idToken);
+                } catch (error) {
+                    signupError.textContent = error.message;
+                }
+            });
+
+            // Login
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                loginError.textContent = '';
+                
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+
+                try {
+                    const userCredential = await fb_auth.signInWithEmailAndPassword(email, password);
+                    const idToken = await userCredential.user.getIdToken();
+                    await sendTokenToBackend(idToken);
+                } catch (error) {
+                    loginError.textContent = error.message;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

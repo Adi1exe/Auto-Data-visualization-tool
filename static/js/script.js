@@ -5,48 +5,31 @@ document.addEventListener('DOMContentLoaded', function() {
         height: '1em'
     });
 
-    // --- Theme Toggle & Ripple Effect ---
+    // --- Theme Toggle (Updated) ---
     const themeToggle = document.getElementById('theme-checkbox');
     const body = document.body;
-    const ripple = document.getElementById('ripple-effect');
 
     // On page load, check saved preference
     if (localStorage.getItem('theme') === 'light') {
-        body.classList.add('light-mode');
+        body.classList.remove('dark-theme');
         if(themeToggle) themeToggle.checked = true;
-        feather.replace(); // Re-run feather for icons
+    } else {
+        body.classList.add('dark-theme');
+        if(themeToggle) themeToggle.checked = false;
     }
 
     if(themeToggle) {
         themeToggle.addEventListener('change', function(e) {
-            body.classList.toggle('light-mode');
+            body.classList.toggle('dark-theme');
             
             // Save preference
-            let theme = body.classList.contains('light-mode') ? 'light' : 'dark';
+            let theme = body.classList.contains('dark-theme') ? 'dark' : 'light';
             localStorage.setItem('theme', theme);
 
-            // --- Ripple Effect ---
-            const rect = themeToggle.getBoundingClientRect();
-            // Get center of the toggle switch
-            const x = rect.left + rect.width / 2;
-            const y = rect.top + rect.height / 2;
-
-            ripple.style.left = `${x}px`;
-            ripple.style.top = `${y}px`;
-            
-            // Set ripple color based on new theme
-            let rippleColor = theme === 'light' ? '#ffffff' : '#1a2233'; // Light ripple on dark, dark ripple on light
-            ripple.style.background = rippleColor;
-
-            ripple.style.animation = 'none';
-            ripple.offsetHeight; // Trigger reflow
-            ripple.style.animation = 'ripple 0.6s linear';
-
-            // Re-run feather to update icon colors if they are set by 'color'
+            // Re-run feather to update icon colors
             feather.replace();
         });
     }
-
 
     // --- File Input Display ---
     const fileInput = document.getElementById('file-input');
@@ -91,10 +74,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData(this);
             const filename = formData.get('filename');
             const columns = formData.getAll('columns');
-            const graphs = formData.getAll('graphs'); // Get selected graph types
+            const graphs = formData.getAll('graphs');
             
-            // **** NEW: Get the current theme ****
-            const currentTheme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
+            // Get the current theme
+            const currentTheme = document.body.classList.contains('dark-theme') ? 'dark' : 'light';
 
             if (columns.length === 0) {
                 alert('Please select at least one column to visualize.');
@@ -131,7 +114,6 @@ document.addEventListener('DOMContentLoaded', function() {
             fetch('/visualize', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                // **** NEW: Send the theme to the backend ****
                 body: JSON.stringify({ filename, columns, graphs, theme: currentTheme })
             })
             .then(response => response.json())
@@ -145,8 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // --- 1. User Selected Visualizations Section ---
                     if (data.user_selected_images && Object.keys(data.user_selected_images).length > 0) {
-                        let html_selected = `<div class="charts-grid">
-                        `;
+                        let html_selected = `<div class="charts-grid">`;
                         for (const key in data.user_selected_images) {
                             const title = key.replace(/_/g, ' ')
                                             .replace('plot ', '')
@@ -164,14 +145,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         visualizationsDiv.innerHTML = html_selected;
                     } else {
                          visualizationsDiv.innerHTML = `
-                            <p style="text-align:center; color: var(--text-muted-color);">No visualizations generated for your selection. Try selecting different columns or graph types.</p>
+                            <p style="text-align:center; color: var(--text-dim);">No visualizations generated for your selection. Try selecting different columns or graph types.</p>
                          `;
                     }
 
                      // --- 2. "You Might Find These Useful" Section ---
                     if (data.useful_images && Object.keys(data.useful_images).length > 0) {
-                        let html_useful = `<div class="charts-grid">
-                        `;
+                        let html_useful = `<div class="charts-grid">`;
                         for (const key in data.useful_images) {
                             const title = key.replace(/_/g, ' ')
                                             .replace('plot ', '')
@@ -188,7 +168,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         html_useful += '</div>';
                         usefulVisualizationsDiv.innerHTML = html_useful;
                     }
-
 
                     // --- 3. Insights Section ---
                     if (data.insights && data.insights.length > 0) {
