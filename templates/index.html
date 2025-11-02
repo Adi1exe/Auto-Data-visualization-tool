@@ -16,12 +16,12 @@
             <p>Upload your dataset to generate clean, modern visualizations instantly.</p>
             
             <div class="theme-switch-wrapper">
-                <i data-feather="sun" class="theme-icon"></i>
+                <i data-feather="moon" class="theme-icon"></i>
                 <label class="theme-switch" for="theme-checkbox">
                     <input type="checkbox" id="theme-checkbox" />
                     <div class="slider round"></div>
                 </label>
-                <i data-feather="moon" class="theme-icon"></i>
+                <i data-feather="sun" class="theme-icon"></i>
             </div>
         </header>
 
@@ -44,6 +44,15 @@
                     <p class="error">{{ error }}</p>
                 {% endif %}
             </div>
+
+            {% if preview %}
+            <div class="card" id="preview-card">
+                <h2><i data-feather="eye"></i> Dataset Preview</h2>
+                <div class="preview-container">
+                    {{ preview|safe }}
+                </div>
+            </div>
+            {% endif %}
 
             {% if columns %}
             <form id="selection-form">
@@ -102,40 +111,52 @@
                 <i data-feather="loader"></i>
                 <p>Generating plots...</p>
             </div>
-            
-            <div id="visualizations" class="visualizations-container">
+
+            <div class="tabs-container" style="display: none;">
+                <div class="tabs">
+                    <button class="tab-link active" onclick="openTab(event, 'selected-viz')">
+                        <i data-feather="star"></i> Your Selected Visualizations
+                    </button>
+                    <button class="tab-link" onclick="openTab(event, 'suggested-viz')">
+                        <i data-feather="gift"></i> AI-Suggested Visualizations
+                    </button>
+                    <button class="tab-link" onclick="openTab(event, 'insights')">
+                        <i data-feather="search"></i> Hidden Insights
+                    </button>
+                </div>
+
+                <div id="selected-viz" class="tab-content active">
+                    <div id="visualizations" class="visualizations-container"></div>
+                </div>
+
+                <div id="suggested-viz" class="tab-content">
+                    <div id="useful-visualizations" class="visualizations-container"></div>
+                </div>
+
+                <div id="insights" class="tab-content">
+                    <div id="insights-card" class="card" style="margin-top: 20px;">
+                        <div id="correlation-insights" class="insight-category" style="display:none;">
+                            <h3><i data-feather="bar-chart-2"></i> Relationships</h3>
+                            <ul></ul>
+                        </div>
+
+                        <div id="outlier-insights" class="insight-category" style="display:none;">
+                            <h3><i data-feather="alert-triangle"></i> Unusual Values</h3>
+                            <ul></ul>
+                        </div>
+
+                        <div id="cluster-insights" class="insight-category" style="display:none;">
+                            <h3><i data-feather="layers"></i> Groups & Segments</h3>
+                            <ul></ul>
+                        </div>
+
+                        <div id="trend-insights" class="insight-category" style="display:none;">
+                            <h3><i data-feather="trending-up"></i> Trends & Time Patterns</h3>
+                            <ul></ul>
+                        </div>
+                    </div>
+                </div>
             </div>
-            
-            <div id="useful-visualizations" class="visualizations-container">
-            </div>
-
-            <div id="insights-card" class="card" style="display: none; margin-top: 20px;">
-                <h2><i data-feather="search"></i> Hidden Insights</h2>
-                <p style="color: #aaa; font-size: 14px;">
-                    Automatically detected patterns and highlights from your dataset.
-                </p>
-
-                <div id="correlation-insights" class="insight-category" style="display:none;">
-                    <h3><i data-feather="bar-chart-2"></i> Relationships</h3>
-                    <ul></ul>
-                </div>
-
-                <div id="outlier-insights" class="insight-category" style="display:none;">
-                    <h3><i data-feather="alert-triangle"></i> Unusual Values</h3>
-                    <ul></ul>
-                </div>
-
-                <div id="cluster-insights" class="insight-category" style="display:none;">
-                    <h3><i data-feather="layers"></i> Groups & Segments</h3>
-                    <ul></ul>
-                </div>
-
-                <div id="trend-insights" class="insight-category" style="display:none;">
-                    <h3><i data-feather="trending-up"></i> Trends & Time Patterns</h3>
-                    <ul></ul>
-                </div>
-            </div>
-
         </main>
         
         <footer>

@@ -7,6 +7,7 @@ import seaborn as sns
 import io
 import base64
 from flask import Flask, request, render_template, jsonify, redirect, url_for
+from werkzeug.utils import secure_filename
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -297,21 +298,31 @@ def upload():
         return render_template('index.html', error='No selected file')
         
     if file and allowed_file(file.filename):
-        filename = file.filename
+        filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
-        
+
+        # Generate preview
         try:
             if filename.endswith('.csv'):
-                df = pd.read_csv(filepath)
+                df = pd.read_csv(filepath, nrows=5)
             else:
-                df = pd.read_excel(filepath)
-            
-            columns = df.columns.tolist()
-            return render_template('index.html', columns=columns, filename=filename)
+                df = pd.read_excel(filepath, nrows=5)
+            preview = df.to_html(classes='table table-striped', index=False)
         except Exception as e:
-            return render_template('index.html', error=f"Error processing file: {e}")
+            preview = f'<p class="error">Error generating preview: {e}</p>'
 
+        # Get column names
+        try:
+            if filename.endswith('.csv'):
+                df_full = pd.read_csv(filepath)
+            else:
+                df_full = pd.read_excel(filepath)
+            columns = df_full.columns.tolist()
+        except Exception as e:
+            return render_template('index.html', error=f'Error reading file: {e}')
+
+        return render_template('index.html', filename=filename, columns=columns, preview=preview)
     return redirect(url_for('index'))
 
 

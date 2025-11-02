@@ -51,12 +51,34 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- File Input Display ---
     const fileInput = document.getElementById('file-input');
     const fileNameDisplay = document.getElementById('file-name-display');
+    const uploadCard = document.getElementById('upload-card');
+
     if (fileInput) {
         fileInput.addEventListener('change', function() {
             if (this.files[0]) {
                 fileNameDisplay.textContent = this.files[0].name;
             } else {
                 fileNameDisplay.textContent = 'Choose a file (.csv, .xlsx)';
+            }
+        });
+
+        // Drag and drop functionality
+        uploadCard.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadCard.classList.add('drag-over');
+        });
+
+        uploadCard.addEventListener('dragleave', () => {
+            uploadCard.classList.remove('drag-over');
+        });
+
+        uploadCard.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadCard.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileNameDisplay.textContent = files[0].name;
             }
         });
     }
@@ -88,11 +110,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const usefulVisualizationsDiv = document.getElementById('useful-visualizations');
             const loader = document.getElementById('loader');
             const insightsCard = document.getElementById('insights-card');
+            const tabsContainer = document.querySelector('.tabs-container');
 
             // Clear previous results
             visualizationsDiv.innerHTML = '';
             usefulVisualizationsDiv.innerHTML = '';
             loader.style.display = 'flex';
+            tabsContainer.style.display = 'none';
             insightsCard.style.display = 'none';
 
             // Reset insights sections
@@ -113,17 +137,15 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(response => response.json())
             .then(data => {
                 loader.style.display = 'none';
+                tabsContainer.style.display = 'block';
+
                 if (data.error) {
                     visualizationsDiv.innerHTML = `<p class="error">Error: ${data.error}</p>`;
                 } else {
                     
                     // --- 1. User Selected Visualizations Section ---
                     if (data.user_selected_images && Object.keys(data.user_selected_images).length > 0) {
-                        let html_selected = `
-                            <div class="card results-header">
-                                <h2><i data-feather="image"></i> 4. Your Selected Visualizations</h2>
-                            </div>
-                            <div class="charts-grid">
+                        let html_selected = `<div class="charts-grid">
                         `;
                         for (const key in data.user_selected_images) {
                             const title = key.replace(/_/g, ' ')
@@ -142,20 +164,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         visualizationsDiv.innerHTML = html_selected;
                     } else {
                          visualizationsDiv.innerHTML = `
-                            <div class="card results-header">
-                                <h2><i data-feather="image"></i> 4. Your Selected Visualizations</h2>
-                            </div>
                             <p style="text-align:center; color: var(--text-muted-color);">No visualizations generated for your selection. Try selecting different columns or graph types.</p>
                          `;
                     }
 
                      // --- 2. "You Might Find These Useful" Section ---
                     if (data.useful_images && Object.keys(data.useful_images).length > 0) {
-                        let html_useful = `
-                            <div class="card results-header">
-                                <h2><i data-feather="gift"></i> You might find these useful</h2>
-                            </div>
-                            <div class.charts-grid">
+                        let html_useful = `<div class="charts-grid">
                         `;
                         for (const key in data.useful_images) {
                             const title = key.replace(/_/g, ' ')
@@ -164,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             html_useful += `
                                 <div class="chart-card">
                                     <h3>${title}</h3>
-                                    <div class.chart-image-wrapper">
+                                    <div class="chart-image-wrapper">
                                         <img src="data:image/png;base64,${data.useful_images[key]}" alt="Chart for ${key}">
                                     </div>
                                 </div>
@@ -193,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     feather.replace({ width: '1em', height: '1em' });
 
                     // Smooth scroll to results
-                    document.getElementById('visualizations').scrollIntoView({ 
+                    document.querySelector('.tabs-container').scrollIntoView({ 
                         behavior: 'smooth', 
                         block: 'start' 
                     });
@@ -205,6 +220,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error:', error);
             });
         });
+    }
+
+    // --- Tab switching --- 
+    window.openTab = function(evt, tabName) {
+        let i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tab-link");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+        document.getElementById(tabName).style.display = "block";
+        evt.currentTarget.className += " active";
     }
 
     // --- Select All / None Button (Columns) ---
